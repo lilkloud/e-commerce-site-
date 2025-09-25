@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = getStripe()
     const { items, successUrl, cancelUrl, orderId, couponCode } = await request.json()
 
     if (!Array.isArray(items) || items.length === 0) {

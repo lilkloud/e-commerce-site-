@@ -1,21 +1,17 @@
-import { createClient } from "@/lib/supabase/server"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
   const res = NextResponse.next()
-  const supabase = createClient()
 
   // Check if this is an auth callback
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
 
   if (code) {
-    await supabase.auth.exchangeCodeForSession(code)
-    return NextResponse.redirect(new URL("/", request.url))
+    const redirectUrl = new URL("/api/auth/callback", request.url)
+    redirectUrl.searchParams.set("code", code)
+    return NextResponse.redirect(redirectUrl)
   }
-
-  // Refresh session if expired - required for Server Components
-  await supabase.auth.getSession()
 
   return res
 }

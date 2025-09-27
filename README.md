@@ -89,3 +89,40 @@ Ensure your email is in `ADMIN_EMAILS`, then access:
 - Stripe Tax + shipping rates (production)
 - Abandoned cart emails & analytics (Vercel Analytics/PostHog)
 - SEO (JSON-LD, sitemaps, product metadata)
+
+## Deploying to Vercel
+
+1) Set Environment Variables (Production)
+
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- NEXT_PUBLIC_SITE_URL (your Vercel URL)
+- NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET (from Stripe Dashboard webhook endpoint)
+- ADMIN_EMAILS (comma-separated)
+- RESEND_API_KEY
+- EMAIL_FROM (e.g., `Private <noreply@yourdomain.com>`)
+- SHIPPING_PRICE_ID (optional)
+
+2) Create Stripe Webhook (Production)
+
+- Stripe Dashboard → Developers → Webhooks → Add endpoint
+- Endpoint URL: `https://YOUR_VERCEL_URL/api/stripe/webhook`
+- Events: at least `checkout.session.completed`
+- Reveal Signing secret and set it as `STRIPE_WEBHOOK_SECRET` in Vercel envs
+- Redeploy on Vercel
+
+3) Supabase Auth URLs
+
+- Supabase → Authentication → URL Configuration
+- Site URL: your Vercel URL
+- Redirect URLs: include your Vercel URL
+
+4) Optional Local Testing (Stripe CLI)
+
+- Install Stripe CLI and run:
+  - `stripe listen --forward-to localhost:3000/api/stripe/webhook`
+  - Copy the `whsec_...` printed into `.env.local` as `STRIPE_WEBHOOK_SECRET`
+  - `stripe trigger checkout.session.completed`
+

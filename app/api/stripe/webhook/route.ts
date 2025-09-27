@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 import { sendOrderConfirmationEmail } from '@/lib/email'
@@ -10,15 +10,23 @@ export const dynamic = 'force-dynamic'
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 export async function POST(request: NextRequest) {
+  const stripe = getStripe()
   const body = await request.text()
-  const signature = request.headers.get('stripe-signature')!
+  const signature = request.headers.get('stripe-signature')
 
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, endpointSecret)
+    if (process.env.NODE_ENV !== 'production') {
+      if (!signature) console.warn('[webhook] Missing Stripe-Signature header')
+      if (!endpointSecret) console.warn('[webhook] Missing STRIPE_WEBHOOK_SECRET env')
+    }
+    event = stripe.webhooks.constructEvent(body, signature as string, endpointSecret)
   } catch (err) {
-    console.error('Webhook signature verification failed:', err)
+    console.error('Webhook signature verification failed')
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[webhook] constructEvent error (details hidden in production):', err)
+    }
     return NextResponse.json(
       { error: 'Webhook signature verification failed' },
       { status: 400 }
